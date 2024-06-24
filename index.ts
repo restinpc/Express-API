@@ -1,14 +1,12 @@
 /**
  * Express API - Index file.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
-const DEBUG = process.env && process.env.DEBUG ? true : false;
-const PID:number = process.pid > 0 ? process.pid : -1;
+// @ts-ignore
+const pid:number = process.pid > 0 ? process.pid : -1;
 
-require('fs').writeFile('pid.txt', PID.toString(), () => {
-    console.log(`DEBUG = ${ DEBUG }`);
-    console.log(`PID = ${ PID }`);
-    require('./src/script/server.js')();
+require('fs').writeFile('pid.txt', pid.toString(), () => {
+    require('./src/script/server')(pid);
 });

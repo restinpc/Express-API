@@ -1,10 +1,10 @@
 /**
  * Express API - Log entity model.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
-import { ILogModel, IRandom } from "../interface/log";
+import { ILogModel, IRandom } from "../interfaces";
 
 export class LogModel implements ILogModel {
     id: number;
@@ -13,9 +13,9 @@ export class LogModel implements ILogModel {
     message: string;
     date: Date;
     constructor(props) {
-        ((props, values:string[]) =>
-                values.forEach((value) =>
-                    this[value] = props[value])
+        ((props, values:string[]) => values.forEach(
+            // @ts-ignore
+            (value) => this[value] = props[value])
         )(props, [
             `id`,
             `node_id`,
@@ -57,8 +57,3 @@ export class RandomLogModel extends LogModel implements IRandom {
         this.random = Math.random();
     }
 }
-
-export default {
-    LogModel,
-    RandomLogModel
-};

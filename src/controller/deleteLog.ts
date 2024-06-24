@@ -1,51 +1,51 @@
 /**
  * Express API - Function to delete a log entity.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
-import log from '../function/log'
-import connection from "../function/mysql";
 import UserModel from "../model/user";
 import { LogModel } from "../model/log";
+import constants from "../constants";
 
-const DEBUG = process.env && process.env.DEBUG ? true : false;
+const DEBUG:boolean = process.env && process.env.DEBUG && process.env.DEBUG == "true";
 
-function deleteLog() {
+function deleteLog(api) {
     const main = () => {
         if (DEBUG) {
-            log(`Api.deleteLog(${JSON.stringify(this.body)})`);
+            api.handler.log(`deleteLog(${JSON.stringify(api.body)})`);
         }
         return new Promise((callback) => {
             try {
-                if (this.request && this.request.headers && this.request.headers.sid) {
-                    const sid = this.request.headers.sid.toString();
+                if (api.request && api.request.headers && api.request.headers.sid) {
+                    const sid = api.request.headers.sid.toString();
                     let query = UserModel.getUserBySessionID(sid);
-                    connection.query(query, (error, res) => {
+                    api.db.query(query, (error, res) => {
                         if (error || !res.length) {
-                            this.invalidRequest(error ? error.toString() : "Error", 500)
+                            api.invalidRequest(error ? error.toString() : "Error", constants.INTERNAL_ERROR)
                                 .then(fout => callback(fout));
                         } else {
-                            const id = parseInt(this.body.id, 10);
+                            const id = parseInt(api.body.id, 10);
                             query = LogModel.deleteLog(id);
-                            connection.query(query, error => {
+                            api.db.query(query, error => {
                                 if (error) {
-                                    log(`${query} -> ${error.toString()}`);
+                                    api.handler.log(`${query} -> ${error.toString()}`);
                                     setTimeout(() => process.exit(), 1);
-                                    this.invalidRequest(error.toString(), 500)
+                                    api.invalidRequest(error.toString(), constants.INTERNAL_ERROR)
                                         .then(fout => callback(fout));
                                 } else {
-                                    callback(this.jsonPayload(true, { success: true }));
+                                    callback(api.jsonPayload(true, { success: true }));
                                 }
                             });
                         }
                     });
                 } else {
-                    this.invalidRequest("Session ID is not defined", 500)
+                    api.invalidRequest("Session ID is not defined", constants.INTERNAL_ERROR)
                         .then(fout => callback(fout));
                 }
             } catch (e) {
-                log(`Error! Api.deleteLog() -> ${e.message}`);
+                api.handler.throw(`deleteLog() -> ${e.message}`);
+                callback(api.invalidRequest(e.message, constants.INTERNAL_ERROR));
             }
         });
     }

@@ -1,10 +1,10 @@
 /**
  * Express API - Log object view.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
-import { ILogView } from "../interface/log";
+import { ILogView } from "../interfaces";
 
 class LogView implements ILogView {
     id: number;
@@ -13,9 +13,9 @@ class LogView implements ILogView {
     date: Date;
     random: number;
     constructor(props) {
-        ((props, values:string[]) =>
-            values.forEach((value) =>
-                this[value] = props[value])
+        ((props, values:string[]) => values.forEach(
+            // @ts-ignore
+            (value) => this[value] = props[value])
         )(props, [
             `id`,
             `action`,

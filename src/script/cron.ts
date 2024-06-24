@@ -1,37 +1,35 @@
 /**
  * Express API - 1M interval cron process controller.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
 import XMLHttpRequest from "node-http-xhr";
 import { exec } from "child_process";
 import fs from "fs";
 import env from "dotenv";
+import mysql from "../mysql";
 import constants from "../constants";
-import connection from "../function/mysql";
-import log from "../function/log";
 import { LogModel } from "../model/log";
 
 env.config();
 let flag:boolean = false;
+const db = new mysql();
 
 const restart = (code:string|number):void => {
     if (!flag) {
-        log(`Cron.restart(${code})`);
+        console.log(`Cron.restart(${code})`);
         flag = true;
-        fs.readFile('pid.txt', 'utf8',
-            (err:any, contents:string) => {
-                let command:string = `kill ${ parseInt(contents) }`;
-                log(command);
-                try {
-                    exec(command);
-                } catch (e) { }
-                command = process.env.SHELL_SCRIPT;
-                log(command);
+        fs.readFile('pid.txt', 'utf8', (err:any, contents:string) => {
+            let command:string = `kill ${ parseInt(contents) }`;
+            console.log(command);
+            try {
                 exec(command);
-            }
-        );
+            } catch (e) { }
+            command = process.env.SHELL_SCRIPT;
+            console.log(command);
+            exec(command);
+        });
     }
 };
 
@@ -50,9 +48,10 @@ const selfcheck = ():void => {
                 if (xhr.status !== constants.HTTP_OK.value) {
                     restart(2);
                 } else if (xhr.responseText) {
-                    if (xhr.responseText !== '{"status":"ok"}') {
+                    const json = require("../../package");
+                    if (xhr.responseText != json.version) {
                         let query:string = LogModel.insertQuery(0, 'restart', 'Server stop respond');
-                        connection.query(query);
+                        db.query(query);
                         restart(JSON.stringify(xhr));
                     } else {
                         process.exit(1);

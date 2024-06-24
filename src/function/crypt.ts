@@ -1,12 +1,12 @@
 /**
  * Express API - AES hashing functions.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
 import CryptoJS from "crypto-js";
 import md5 from "md5";
-import { IAESData } from "../interface/system";
+import { IAESData } from "../interfaces";
 
 class Crypt {
     static function(pass:string):boolean {

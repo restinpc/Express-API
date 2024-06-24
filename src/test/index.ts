@@ -1,7 +1,7 @@
 /**
  * Express API - Unit tests autoloader.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
 import fs from "fs";

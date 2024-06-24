@@ -1,40 +1,39 @@
 /**
  * Express API - Function to sign in user.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
 
 import md5 from "md5";
-import connection from "../function/mysql";
-import log from "../function/log";
 import crypt from "../function/crypt";
 import UserModel from "../model/user";
+import constants from "../constants";
 
-const DEBUG = process.env && process.env.DEBUG ? true : false;
+const DEBUG:boolean = process.env && process.env.DEBUG && process.env.DEBUG == "true";
 
-function loginUser() {
+function loginUser(api) {
     const main = () => {
         if (DEBUG) {
-            log(`Api.loginUser(${ JSON.stringify(this.body) })`);
+            api.handler.log(`loginUser(${JSON.stringify(api.body)})`);
         }
         return new Promise(callback => {
             try {
-                if (!this.body.pass || !this.body.email) {
-                    callback(this.invalidRequest('Invalid arguments'));
+                if (!api.body.pass || !api.body.email) {
+                    callback(api.invalidRequest('Invalid arguments'));
                 } else {
-                    const email = this.body.email
+                    const email = api.body.email
                         .toString()
                         .trim()
                         .toLowerCase()
                         .replace(/"/g, '');
-                    const password = this.body.pass.toString().trim();
+                    const password = api.body.pass.toString().trim();
                     let query = UserModel.getUserByEmail(email);
-                    connection.query(
+                    api.db.query(
                         query,
                         (error, results) => {
                             if (error) {
-                                log(`${query} -> ${error.toString()}`);
-                                this.invalidRequest(error.toString()).then(fout => callback(fout));
+                                api.handler.error(`${query} -> ${error.toString()}`);
+                                api.invalidRequest(error.toString()).then(fout => callback(fout));
                             } else {
                                 if (results.length > 0) {
                                     const decrypted = crypt.decrypt_password(
@@ -44,12 +43,12 @@ function loginUser() {
                                     if (password === decrypted) {
                                         const sid = md5(Date.now() * Math.random());
                                         query = UserModel.updateUserSessionID(parseInt(results[0].id), sid);
-                                        connection.query(
+                                        api.db.query(
                                             query,
                                             (error) => {
                                                 if (error) {
-                                                    log(`${query} -> ${error.toString()}`);
-                                                    this.invalidRequest(error.toString())
+                                                    api.handler.error(`${query} -> ${error.toString()}`);
+                                                    api.invalidRequest(error.toString())
                                                         .then(fout => callback(fout));
                                                 } else {
                                                     const user = {
@@ -58,17 +57,17 @@ function loginUser() {
                                                         magic: results[0].salt,
                                                         sid: sid,
                                                     };
-                                                    this.cookie = {
+                                                    api.cookie = {
                                                         name: "sid",
                                                         value: sid
                                                     };
-                                                    callback(this.jsonPayload(true, user));
+                                                    callback(api.jsonPayload(true, user));
                                                 }
                                             }
                                         );
                                     } else {
                                         callback(
-                                            this.jsonPayload(
+                                            api.jsonPayload(
                                                 false,
                                                 {},
                                                 "Invalid password"
@@ -77,7 +76,7 @@ function loginUser() {
                                     }
                                 } else {
                                     callback(
-                                        this.jsonPayload(
+                                        api.jsonPayload(
                                             false,
                                             {},
                                             "Invalid email address"
@@ -89,7 +88,8 @@ function loginUser() {
                     );
                 }
             } catch (e) {
-                log(`Error! Api.loginUser(${JSON.stringify(this.body)}) -> ${e.message}`);
+                api.handler.throw(`loginUser(${JSON.stringify(api.body)}) -> ${e.message}`);
+                callback(api.invalidRequest(e.message, constants.INTERNAL_ERROR));
             }
         });
     }

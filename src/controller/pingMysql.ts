@@ -1,34 +1,32 @@
 /**
  * Express API - Function to ping database.
  *
- * 1.0.0 # Aleksandr Vorkunov <developing@nodes-tech.ru>
+ * 1.0.1 # Aleksandr Vorkunov <devbyzero@yandex.ru>
  */
+ 
+import constants from "../constants";
 
-import log from "../function/log";
-import connection from "../function/mysql";
+const DEBUG:boolean = process.env && process.env.DEBUG && process.env.DEBUG == "true";
 
-const DEBUG = process.env && process.env.DEBUG ? true : false;
-
-function pingMysql() {
+function pingMysql(api) {
     const main = () => {
         if (DEBUG) {
-            log(`Api.pingMysql()`);
+            api.handler.log(`pingMysql()`);
         }
-        return new Promise(callback => {
+        return new Promise((callback) => {
             try {
                 let query = 'SELECT 1';
-                connection.query(query, error => {
-                    if (error) {
-                        log(`${query} -> ${error.toString()}`);
-                        setTimeout(() => process.exit(), 1);
-                        this.invalidRequest(error.toString(), 500)
-                            .then((fout) => callback(fout));
-                    } else {
-                        this.defaultResponse().then((fout) => callback(fout));
+                let time = new Date().valueOf();
+                api.db.query(query).then((res) => {
+                    if (res) {
+                        api.response(true, {
+                            ping: new Date().valueOf() - time
+                        }).then((fout) => callback(fout));
                     }
                 });
             } catch (e) {
-                log(`Error! Api.pingMysql() -> ${e.message}`);
+                api.handler.throw(`pingMysql() -> ${e.message}`);
+                callback(api.invalidRequest(e.message, constants.INTERNAL_ERROR));
             }
         });
     };
